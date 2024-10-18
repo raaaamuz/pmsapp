@@ -13,7 +13,7 @@ SECRET_KEY = 'django-insecure-u^pd1t^ctiksbn)41%74binymr914f2d*mle&-b1@_!78!60l7
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['4sightoperations.in', 'www.4sightoperations.in']
+ALLOWED_HOSTS = ['4sightoperations.in', 'www.4sightoperations.in','localhost', '127.0.0.1']
 
 
 # Application definition
@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'survey',
+    'segments',
     'corsheaders',  # Add this
 ]
 
