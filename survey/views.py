@@ -5,6 +5,19 @@ from .models import Survey
 from .serializers import SurveySerializer
 import logging
 logger = logging.getLogger(__name__)
+
+
+@api_view(['GET'])
+def get_all_surveys(request):
+    surveys = Survey.objects.all()
+    
+    # Handle empty queryset
+    if not surveys.exists():
+        return Response({'message': 'No surveys available'}, status=status.HTTP_204_NO_CONTENT)
+
+    serializer = SurveySerializer(surveys, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
 @api_view(['POST'])
 def create_survey(request):
     # Validate and save survey data
