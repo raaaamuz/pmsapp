@@ -8,9 +8,10 @@ from rest_framework import status
 from django.db.models import Max, Subquery, OuterRef
 
 
-@api_view(['POST'])
-def create_segment(request):
+@api_view(['POST', 'PATCH'])
+def create_or_update_segment(request):
     if request.method == 'POST':
+        # Existing POST logic
         data = request.data
         print(data)
 
@@ -25,12 +26,12 @@ def create_segment(request):
         
         segments_dict = defaultdict(dict)
 
-        for item in data[1:]:  
+        for item in data[1:]:
             segment_number = item.get('segmentNumber')
             item_key = item.get('item')
 
             if item_key is not None:
-                key = item_key.lower().replace(' ', '_').replace('-', '_') 
+                key = item_key.lower().replace(' ', '_').replace('-', '_')
                 value = item.get('value')
                 segments_dict[segment_number][key] = value
             else:
@@ -38,8 +39,8 @@ def create_segment(request):
         
         segments = []
         for segment_number, segment_data in segments_dict.items():
-            segment_data.update(project_info)  
-            segment_data['segment_number'] = segment_number  
+            segment_data.update(project_info)
+            segment_data['segment_number'] = segment_number
 
             # Check if the segment exists
             try:
@@ -59,6 +60,31 @@ def create_segment(request):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    elif request.method == 'PATCH':
+        data = request.data
+        project_name = data.get('project_name', None)
+        
+        if not project_name:
+            return Response({"error": "Project name is required for PATCH requests."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            segments = Segment.objects.filter(project_name=project_name)
+            if not segments.exists():
+                return Response({"error": "No segments found for this project name."}, status=status.HTTP_404_NOT_FOUND)
+
+            for segment in segments:
+                for key, value in data.items():
+                    setattr(segment, key, value)
+                segment.save()
+
+            serializer = SegmentSerializer(segments, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Segment.DoesNotExist:
+            return Response({"error": "Segment not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         
 @api_view(['GET'])
 def get_project_names(request):
